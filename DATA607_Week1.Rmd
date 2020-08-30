@@ -1,0 +1,60 @@
+---
+title: "DATA 607 - Week 1"
+author: "Ian Costello"
+date: "8/29/2020"
+output: html_document
+---
+
+# Loading Data into a Data Frame
+
+## Overview
+
+I decided to select the data set for FiveThirtyEight's article, ["Our Guide to the Exuberant Nonesense of College Fight Songs"](https://projects.fivethirtyeight.com/college-fight-song-lyrics/). In high school, I was part of the band and had to play our fight song (which is the same as Cal's I have discovered) repeatedly. I'm a bit overloaded on politics and not particularly into professional sports, so this dataset had a certain charm!
+
+The brass tacks for the data set is reviewing the lyrics for certain *clichés*, things like "fight," "victory," "rah," etc. The article is more of a tool to view each school's song and have summary stats on the cliches and how it rates among the others. It also automatically starts playing, so make sure your speakers are at an appropriate low volume before clicking that link.
+
+## Summary Statistics
+
+Linked directly with 538's GitHub raw source data. 
+```{r fightSong read}
+fightSongRawURL <- "https://raw.githubusercontent.com/fivethirtyeight/data/master/fight-songs/fight-songs.csv"
+fightSongRaw <- read.csv(file = fightSongRawURL, header = TRUE, sep = ",")
+
+```
+
+Just to check initial impressions of the data, I used the summary function to breakout the columns along summary stats. Because most of the columns are stored as characters, there's not much to glean from the presence of a certain trope. I did zero in on the beats per minute (bpm) and song duration (sec_duration) columns and chose those to create a subset dataframe.
+```{r fightSong summary}
+
+summary(fightSongRaw)
+
+```
+
+I named a variable for the subset and made a few selections of the raw data source. As a check to ensure I pulled the right vars, I put in a "head" function. 
+
+```{r fightSong subset}
+fightSongSub <- fightSongRaw[c(1,2,9:10,22)]
+
+head(fightSongSub)
+
+```
+
+## Conclusions
+
+### General Comments
+
+Turning these data into 538's tool to have user explore each song more in-depth is a logical next step. I was curious how the songs may stack up against championship wins, bowl game appearances, and season records. If the songs (and perhaps the number of times they're played per game) have any connection to sports wins. I rather doubt it, but an interesting future project with additional data included.
+
+### Scatterplot
+
+Thought it'd be fun to throw a scatterplot graphic in. Using what I learned from the R bridge program, I wanted to compare bpm and sec_duration columns along conference lines. I didn't figure the conference would make much of a difference and that seemed to bear out with no pattern. I was a bit suprised to see that there was a polarization of bpm, with a gap in the middle.
+
+
+``` {r fightSong scatterplot}
+
+library(ggplot2)
+
+ggplot(fightSongSub, aes(x=bpm, y=sec_duration, color=conference)) +
+  geom_point()
+
+```
+
