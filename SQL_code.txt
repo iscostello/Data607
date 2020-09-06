@@ -1,0 +1,48 @@
+CREATE TABLE `movie_rating` (
+  `ratingID` int NOT NULL,
+  `firstName` varchar(45) DEFAULT NULL,
+  `lastName` varchar(45) DEFAULT NULL,
+  `viewerID` int DEFAULT NULL,
+  `age` int DEFAULT NULL,
+  `movieTitle` varchar(45) DEFAULT NULL,
+  `movieID` int DEFAULT NULL,
+  `movieRating` int DEFAULT NULL,
+  PRIMARY KEY (`ratingID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `movies` (
+  `movieID` int NOT NULL,
+  `title` varchar(45) DEFAULT NULL,
+  `year_release` year DEFAULT NULL,
+  `genre` varchar(45) DEFAULT NULL,
+  `runtime` int DEFAULT NULL,
+  PRIMARY KEY (`movieID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+LOAD DATA INFILE "C:\ProgramData\MySQL\MySQL Server 8.0\Uploads\movie_rating_results.csv"
+INTO TABLE viewer_rating
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY 'n'
+IGNORE 1 LINES
+(ratingID, firstName, lastName, viewerID, age, movieTitle, movieID, movieRating);
+
+INSERT INTO `movie_ratings`.`movies`
+(`movieID`,
+`title`,
+`year_release`,
+`genre`,
+`runtime`)
+
+VALUES
+(1, 'Portrait of a Lady on Fire', '2020', 'drama', 119), 
+(2, 'Circus of Books', '2020', 'documentary', 92),
+(3, 'Hamilton', '2020', 'musical', 160),
+(4, 'The Outpost', '2020', 'action', 123),
+(5, 'Onward', '2020', 'animation', 114),
+(6, 'Emma', '2020', 'comedy', 132);
+
+SELECT * 
+FROM movie_rating 
+LEFT JOIN movies 
+ON movie_rating.movieID = movies.movieID 
+INTO OUTFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/movies.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n'
