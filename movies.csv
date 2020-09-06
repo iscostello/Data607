@@ -1,0 +1,37 @@
+ratingID,firstName,lastName,viewerID,age,movieID,movieTitle,movieRating,year,genre,runtime
+1,Jesse,Adcock,1,40,1,Portrait of a Lady on Fire,,2020,drama,119
+2,Jesse,Adcock,1,40,1,The Fight,3,2020,drama,119
+3,Jesse,Adcock,1,40,1,Hamilton,1,2020,drama,119
+4,Jesse,Adcock,1,40,1,The Outpost,,2020,drama,119
+5,Jesse,Adcock,1,40,1,Onward,4,2020,drama,119
+6,Jesse,Adcock,1,40,1,Emma,,2020,drama,119
+7,Hypatia,Luna,2,36,2,Portrait of a Lady on Fire,4,2020,documentary,92
+8,Hypatia,Luna,2,36,2,The Fight,4,2020,documentary,92
+9,Hypatia,Luna,2,36,2,Hamilton,5,2020,documentary,92
+10,Hypatia,Luna,2,36,2,The Outpost,,2020,documentary,92
+11,Hypatia,Luna,2,36,2,Onward,5,2020,documentary,92
+12,Hypatia,Luna,2,36,2,Emma,3,2020,documentary,92
+13,Ines,Luna,3,22,3,Portrait of a Lady on Fire,3,2020,musical,160
+14,Ines,Luna,3,22,3,The Fight,,2020,musical,160
+15,Ines,Luna,3,22,3,Hamilton,5,2020,musical,160
+16,Ines,Luna,3,22,3,The Outpost,,2020,musical,160
+17,Ines,Luna,3,22,3,Onward,4,2020,musical,160
+18,Ines,Luna,3,22,3,Emma,3,2020,musical,160
+19,Scott,Nancarrow,4,38,4,Portrait of a Lady on Fire,3,2020,action,123
+20,Scott,Nancarrow,4,38,4,The Fight,,2020,action,123
+21,Scott,Nancarrow,4,38,4,Hamilton,2,2020,action,123
+22,Scott,Nancarrow,4,38,4,The Outpost,1,2020,action,123
+23,Scott,Nancarrow,4,38,4,Onward,4,2020,action,123
+24,Scott,Nancarrow,4,38,4,Emma,,2020,action,123
+25,Ian,Yost,6,41,6,Portrait of a Lady on Fire,2,2020,comedy,132
+26,Ian,Yost,6,41,6,The Fight,4,2020,comedy,132
+27,Ian,Yost,6,41,6,Hamilton,3,2020,comedy,132
+28,Ian,Yost,6,41,6,The Outpost,,2020,comedy,132
+29,Ian,Yost,6,41,6,Onward,4,2020,comedy,132
+30,Ian,Yost,6,41,6,Emma,2,2020,comedy,132
+31,Lia,Yost,5,34,5,Portrait of a Lady on Fire,4,2020,animation,114
+32,Lia,Yost,5,34,5,The Fight,3,2020,animation,114
+33,Lia,Yost,5,34,5,Hamilton,4,2020,animation,114
+34,Lia,Yost,5,34,5,The Outpost,1,2020,animation,114
+35,Lia,Yost,5,34,5,Onward,5,2020,animation,114
+36,Lia,Yost,5,34,5,Emma,,2020,animation,114
