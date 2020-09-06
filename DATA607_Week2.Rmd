@@ -1,0 +1,50 @@
+---
+title: "week2_SQL_R"
+author: "Ian Costello"
+date: "9/5/2020"
+output: html_document
+---
+
+# Data Collection
+
+## Survey Construction
+
+I created a [quick Excel workbook](https://github.com/iscostello/Data607/blob/master/movie_rating_results.xlsx) to collect the results of a phone survey conducted over the course of two nights this week to collect movie ratings of six films released this year. The films were chosen semi-randomly by me from a list by [Rotten Tomatoes](https://editorial.rottentomatoes.com/guide/the-best-movies-of-2020/). I wanted to mix in different genres and topics. 
+
+The friends I called on are all fortunate enough to have most of the streaming services including (HBO, Disney+, Hulu, etc.) and are also pretty keen on movies in general. Additionally, as a result of COVID more time has been spent at home leading to lots of movie viewing.
+
+### Survey and Movie Information
+
+The survey is very simple asking one question on how to rank the movie from 1, meaning terrible to 5, meaning amazing. I allowed for N/A (NULL) responses if they did not see the movie. With just one question, the survey relies heavily on the subjective opinion of the respondent, So, it's not exactly the most scientific. 
+
+I did want to set this information against some basic information about each movie. On my own, I got the year released (all 2020), genre, and runtime for each film and placed it in a separate file. 
+
+# Storing data in a relational database
+
+[Using MySQL](https://github.com/iscostello/Data607/blob/master/SQL_code.txt), I created two tables one named movies with the basic facts of each movie and movie_rating, where the responses to the survey would be imported.
+
+Once in the database I joined the tables using a LEFT JOIN to attach the movie information to each response on a column labeled movieID.
+
+# Importing and Preparing Data
+
+I uploaded the MySQL output to GitHub for easy access and used the head() function to ensure it was imported successfully. 
+
+```{r read csv}
+moviesRatingURL <- "https://raw.githubusercontent.com/iscostello/Data607/master/movies.csv"
+moviesRaw <- read.csv(file = moviesRatingURL, header = TRUE, sep = ",")
+```
+Since each record is a single rating, by a single person, for a single movie, for movies the person did not see creates a NULL record. When importing in from MySQL, NULLs appear as blanks. 
+
+# Analysis 
+
+Using the ggplot package, I was able to aggregate some of the results of the survey. In the aggregate and very unsurprising for my friend group, "Onward" took the top spot. I also would have rated this movie quite highly as I am a huge Disney fan.
+
+```{r analysis}
+require(ggplot2)
+aggregate(movieRating ~ movieTitle, moviesRaw, mean)
+ggplot(moviesRaw, aes(x=firstName, y=movieRating)) + 
+  geom_boxplot()
+```
+# Conclusions
+
+I was interested to see the breakdown on the ratings by person. Jesse is a *really* tough critic. So to see the lowest score come from Lisa was interesting. I think that the NULL values also play a role here since Jesse did not view the movie that Lia rated a 1. So by not seeing the movie, he may very well have already rendered his verdict.
