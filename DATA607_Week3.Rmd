@@ -1,0 +1,96 @@
+---
+title: "DATA607_Week3"
+author: "Ian Costello"
+date: "9/11/2020"
+output: html_document
+---
+
+## Exercise 1. Matching strings
+
+
+```{r ex1}
+library(stringr)
+
+majorsURL <- "https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv"
+majors <- read.csv(file = majorsURL, header = TRUE, sep = ",")
+
+str_subset(majors$Major, "STATISTICS")
+str_subset(majors$Major, "DATA")
+
+```
+
+## Exercise 2. Collapsing strings
+
+```{r ex2}
+line1<- c("bell pepper", "bilberry",     "blackberry",   "blood orange")
+
+line5<- c("blueberry", "cantaloupe",   "chili pepper", "cloudberry")
+
+line9<- c("elderberry",   "lime",         "lychee",       "mulberry")  
+
+line13<- c("olive",        "salal berry")
+
+str_c(c(line1, line5, line9, line13), collapse = ", ")
+
+```
+
+
+## Exercise 3. Describe, in words, what these expressions will match:
+
+###a.
+This regexp will match any single character and then the literal string "\1\1." 
+```{r ex3a}
+test <- list("777", "data\1\1", "anna", "2002", '"elle"', "abc  d\1\1", "\1\1\1\1\1\1\1\1\1", "a  a  a    ")
+str_view(test, "(.)\1\1", match = TRUE)
+```
+
+###b.
+This regexp will match two characters to return a word that is symmetrical (matching the two inner characters and the two outer characters) and is four characters long. 
+```{r ex3b}
+test <- list("dada","daad", "ddaaaa","777", "data\1\1", "anna", "2002", '"elle"', "abc  d\1\1", "\1\1\1\1\1\1\1\1\1", "a  a  a    ")
+str_view(test, "(.)(.)\\2\\1", match = TRUE)
+```
+
+###c.
+This regexp will match any two characters followed by the literal string "\1."
+```{r ex3c}
+test <- list("dada","daad", "ddaaaa","777", "data\1\1", "anna", "2002", '"elle"', "abc  d\1\1", "\1\1\1\1\1\1\1\1\1", "a  a  a    ")
+str_view(test, "(..)\1", match = TRUE)
+```
+
+###d.
+This regexp will match characters where the 3rd and 5th character match the first. 
+```{r ex3d}
+test <- list("dada","daad", "ddaaaa","777", "data\1\1", "anna", "2002", '"elle"', "abc  d\1\1", "\1\1\1\1\1\1\1\1\1", "a  a  a  vvvvv  ", "a    a    a       ")
+str_view(test, "(.).\\1.\\1", match = TRUE)
+```
+
+###e.
+This regexp will match up on a pattern which repeats zero or more times, where the strings first three characters match the last three characters but in reverse. 
+```{r ex3e}
+test <- list("dada","daad", "ddaaaa","777", "data\1\1", "anna", "2002", '"elle"', "abc  d\1\1", "\1\1\1\1\1\1\1\1\1", "a  a  a  vvvvv  ", "a    a    a       ")
+str_view(test, "(.)(.)(.).*\\3\\2\\1", match = TRUE)
+```
+
+## 4 Construct regular expressions to match words that:
+
+### a. Start and end with the same character.
+
+```{r ex4a}
+a<- list("dad","mom","pop","lap","diamond","greg","tim")
+str_view(a,"^(.).*\\1$",match = TRUE)
+```
+
+### b. Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+
+```{r ex4b}
+b<- list("church","shush","papa","cookbook","diamond","greg","tim")
+str_view(b,"(..).*\\1",match = TRUE)
+```
+
+### c. Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+```{r ex4c}
+c<- list("dad","mom","pop","lap","church","shush","papa","cookbook","diamond","greg","tim","eleven","elephant","Mississippi")
+str_view(c,"([a-z]).*\\1.*\\1",match = TRUE)
+```
