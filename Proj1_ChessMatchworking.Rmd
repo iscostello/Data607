@@ -1,0 +1,187 @@
+---
+title: "Project 1: Chess Scores"
+author: "Ian Costello"
+date: "9/19/2020"
+output: html_document
+---
+
+## Libraries
+
+```{r libraries}
+library(stringr)
+library(dplyr)
+library(tidyverse)
+```
+# Data Extraction
+
+## GitHub Storage
+
+In order to better reproduce the data, I stored the raw file on GitHub. I thought it was going to be rather straightforward to use the vertical line (pip) to parse the data... It was *not* that straightforward as it turns out. Using the read.table function was my best bet after going to the wrong road for a while with read.delim.
+
+*Quick Note:* I had initially set the "header" argument as TRUE, but that created a lot of problems further down pretty quickly, and my troubleshooting led me to that argument. Switching it solved some things, but made others a bit more tricky! 
+
+```{r data pull}
+chessURL <- "https://raw.githubusercontent.com/iscostello/Data607/master/chessMatches.txt"
+chessMatchRaw <- read.table(file = chessURL, header = FALSE, skip = 1, sep = "|", fill = TRUE, stringsAsFactors = FALSE)
+
+str(chessMatchRaw)
+```
+
+## First you, now me
+
+Staring at the raw text data, I saw a problem with extracting just the two rows of data that I needed. At the beginning of this project I was pretty lousy with regex, but going over my notes from the R bridge I saw how I had used the yeoman function "seq." The text file followed a pattern, every three rows, starting with the first and second row. Simple.
+
+Each of the sets of rows was its own data set, and using "cbind" I smushed them together to form a combination set. Here is when I discovered having headers = TRUE was a problem.  
+
+```{r}
+chessMatch_PlayerRow <- chessMatchRaw[seq(1,195,3),]
+
+
+chessMatch_StateRow <- chessMatchRaw[seq(2, 195,3),]
+
+
+chessMatch_combo <- cbind(chessMatch_PlayerRow[1:10],chessMatch_StateRow[1:10])
+head(chessMatch_combo)
+
+
+```
+
+Without headers there were just blank columns, so I had to create my own.
+
+```{r}
+colnames(chessMatch_combo)
+```
+# Data Wraggling: Name, Set, Match
+
+*Quick Note:* I made a mistake by not including the "State" column right away in a subset of the data I made further down. I tacked it on at the first last minute. I tried to build it back into the sets, but it ended up breaking my average calculation for some reason. So this is how I crammed it in to be added to the eventual export.
+
+```{r}
+
+names(chessMatch_combo)[1] <- "Pairing"
+names(chessMatch_combo)[2] <- "PlayerName"
+names(chessMatch_combo)[3] <- "TotalPoints"
+names(chessMatch_combo)[4] <- "Round1"
+names(chessMatch_combo)[5] <- "Round2"
+names(chessMatch_combo)[6] <- "Round3"
+names(chessMatch_combo)[7] <- "Round4"
+names(chessMatch_combo)[8] <- "Round5"
+names(chessMatch_combo)[9] <- "Round6"
+names(chessMatch_combo)[10] <- "Round7"
+names(chessMatch_combo)[12] <- "USCFID.PrePost"
+names(chessMatch_combo)[11] <- "State"
+
+
+colnames(chessMatch_combo)
+```
+
+## Subset that wasn't
+
+I ended up calling the below the "subset." My intent was to have just the columns I needed to work with later on. I kept adding to this df until by the end it was 31 columns long.
+
+```{r}
+chessMatch_subset <- chessMatch_combo[-1,c(1:10,12)]
+head(chessMatch_subset, 10)
+```
+
+## RegEx Experience
+
+I learned a lot about RegEx in this section. I also learned you have to check for spaces when working with strings and text files. 
+
+My first task here is to break apart the USCFID.PrePost column into its three parts: the USCFID, Pre-score, and post-score using RegEx. The ID was easy, looking for 8 digits. And once I got the hang of it the pre and post scores came easily, referencing the String RegEx cheatsheet. I decided I wanted to break the round columns up to gather the Pairing IDs of the opponents, so that I could match on their prescores and swap them in to get the average. So I extracted those too. 
+
+Lastly, I got all the way to the end, matching the opponent IDs to the Pairing ID and kept coming up NULL. It was making me absolutely bonkers. I had accounted for the white spaces of the opponents by asking for just the digits (either 1 or 2). I assumed that the Pairing would already come free of any white space - that was a bad assumption. Simply creating a new ID column and matching on that solved my issue.
+
+```{r}
+chessMatch_subset$USCFID <- str_extract_all(chessMatch_subset$USCFID.PrePost,"\\d{8}")
+chessMatch_subset$USCFID <- as.character(chessMatch_subset$USCFID)
+
+chessMatch_subset$preScore <- str_extract_all(chessMatch_subset$USCFID.PrePost,":\\s\\d{4}")
+chessMatch_subset$preScore <- as.character(chessMatch_subset$preScore)
+
+chessMatch_subset$postScore <- str_extract_all(chessMatch_subset$USCFID.PrePost,">\\d{4}")
+chessMatch_subset$postScore <- as.character(chessMatch_subset$postScore)
+
+chessMatch_subset$oppo1 <- str_extract_all(chessMatch_subset$Round1,"\\d+$")
+chessMatch_subset$oppo1 <- as.character(chessMatch_subset$oppo1)
+
+chessMatch_subset$oppo2 <- str_extract_all(chessMatch_subset$Round2,"\\d+$")
+chessMatch_subset$oppo2 <- as.character(chessMatch_subset$oppo2)
+
+chessMatch_subset$oppo3 <- str_extract_all(chessMatch_subset$Round3,"\\d+$")
+chessMatch_subset$oppo3 <- as.character(chessMatch_subset$oppo3)
+
+chessMatch_subset$oppo4 <- str_extract_all(chessMatch_subset$Round4,"\\d+$")
+chessMatch_subset$oppo4 <- as.character(chessMatch_subset$oppo4)
+
+chessMatch_subset$oppo5 <- str_extract_all(chessMatch_subset$Round5,"\\d+$")
+chessMatch_subset$oppo5 <- as.character(chessMatch_subset$oppo5)
+
+chessMatch_subset$oppo6 <- str_extract_all(chessMatch_subset$Round6,"\\d+$")
+chessMatch_subset$oppo6 <- as.character(chessMatch_subset$oppo6)
+
+chessMatch_subset$oppo7 <- str_extract_all(chessMatch_subset$Round7,"\\d+$")
+chessMatch_subset$oppo7 <- as.character(chessMatch_subset$oppo7)
+
+chessMatch_subset$ID <- str_extract_all(chessMatch_subset$Pairing, "\\d+")
+chessMatch_subset$ID <- as.character(chessMatch_subset$ID)
+
+
+head(chessMatch_subset,10)
+```
+
+After breaking apart the pre and post scores, I removed their punctuation and made them into numeric form. For whatever reason, the post score was not coming up properly. Since I didn't need it (thankfully), I moved on. Interesting to try to understand why I got this error. Individually they work fine, but together the second function breaks. 
+
+```{r}
+chessMatch_subset$preScore <- as.numeric(str_replace_all(chessMatch_subset$preScore, "[[:punct:]]",""))
+chessMatch_subset$postScore <- as.numeric(str_replace_all(chessMatch_subset$postScore, "[[:punct:]]",""))
+
+head(chessMatch_subset, 10)
+```
+## Matching Scores and IDs
+
+The crux of this project is in this section. I created a set of seven new columns to be filled by the scores of the opponents, based on their IDs. As I mentioned earlier, the original "Pairing" column gave me a big headache, but I overcame that with creating a new ID column altogether. 
+
+Also as I mentioned, I matched the State column as I forgot it at the beginning and couldn't smoothly incorporate it without breaking more code.
+```{r}
+oppoScores <- chessMatch_subset[c(22,2,13,15:21)]
+
+chessMatch_subset$oppo1score <- oppoScores$preScore[match(chessMatch_subset$oppo1, oppoScores$ID)]
+chessMatch_subset$oppo2score <- oppoScores$preScore[match(chessMatch_subset$oppo2, oppoScores$ID)]
+chessMatch_subset$oppo3score <- oppoScores$preScore[match(chessMatch_subset$oppo3, oppoScores$ID)]
+chessMatch_subset$oppo4score <- oppoScores$preScore[match(chessMatch_subset$oppo4, oppoScores$ID)]
+chessMatch_subset$oppo5score <- oppoScores$preScore[match(chessMatch_subset$oppo5, oppoScores$ID)]
+chessMatch_subset$oppo6score <- oppoScores$preScore[match(chessMatch_subset$oppo6, oppoScores$ID)]
+chessMatch_subset$oppo7score <- oppoScores$preScore[match(chessMatch_subset$oppo7, oppoScores$ID)]
+
+chessMatch_subset$State <- chessMatch_combo$State[match(chessMatch_subset$Pairing, chessMatch_combo$Pairing)]
+
+head(chessMatch_subset)
+
+```
+
+At first, I just used the "mean" function, but it seemed to take the mean of all the numbers, rather than the ones I wanted. After a bit of digging through the texts ("Text Mining with R"), reviewing my DATA 606 work, and the Internet, I stumbled on the "rowMean" function. I made certain to include NULL results, and since this function didn't have a "trim" argument, I wrapped it in a "round" function to match the sigfigs of the prompt. 
+
+```{r}
+chessMatch_subset$oppoAvg <- round(rowMeans(chessMatch_subset[,grep("\\dscore$",names(chessMatch_subset))],na.rm = TRUE,),digits = 0)
+
+head(chessMatch_subset)
+```
+
+# Export to csv
+
+At this point, I'm pretty much home free. Created a much cleaner table and export code.
+
+```{r}
+chessMatch_export <- chessMatch_subset[,c(2,30,3,13,31)]
+
+head(chessMatch_export)
+```
+
+```{r}
+write.csv(chessMatch_export,"chessMatchSummary.csv")
+```
+
+
+
+
+
