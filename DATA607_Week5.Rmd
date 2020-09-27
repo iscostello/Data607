@@ -1,0 +1,79 @@
+---
+title: 'Assignment 5: Tidy Data'
+author: "Ian Costello"
+date: "9/26/2020"
+output: html_document
+---
+
+## Load Libraries
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(tidyverse)
+```
+
+## Get Source Data
+
+I took the data from the assignment sheet and transcribed it to a csv and loaded onto GitHub for reproducibility. From the *tidyr* package, I used *read_csv()* to get the data. This function has a number of helpful arguments like *skip_empty_rows* and *trim_ws*. I left *col_names* as FALSE initially, but quickly changed it to TRUE when I noticed the function could ready the column headers correctly. 
+
+```{r}
+dataURL <- "https://raw.githubusercontent.com/iscostello/Data607/master/tidyset.csv"
+flightData <- read_csv(dataURL, col_names = TRUE, skip_empty_rows = TRUE, trim_ws = TRUE)
+print(flightData)
+```
+## Get the Broom: Data Cleaning
+
+Just looking at how the data is structured, I know I wanted to create a variable for "City." Using *gather()* this was pretty straightforward and including the *na.rm* argument eliminated the remaining pesky NULL rows. I also took the time to rename the first and second columns.
+
+```{r}
+flightPivot <- gather(flightData, "Los Angeles", "Phoenix", "San Diego", "San Francisco", "Seattle", key = "City", value = "numFlights", na.rm = TRUE)
+
+flightPivot <- fill(flightPivot,X1,)
+names(flightPivot)[1] <- "Airline"
+names(flightPivot)[2] <- "ArrivalStatus"
+print(flightPivot)
+```
+
+## Data Transformation
+
+I didn't quite understand why the package was called *dplyr/plyr* until working in this section. With *filter()* and *select()* I pulled out just the "delayed" rows and removed arrival status. I fun trick I saw in one of the posted videos that was making the case for using select in *dplyr* was that you could use normal strings instead of integers to select columns. So I removed ArrivalStatus by simply adding a "-" before it. Neat trick I thought!
+
+```{r}
+flightsDelay <- filter(flightPivot, ArrivalStatus == "delayed")
+
+flightsDelay <- select(flightsDelay, -ArrivalStatus)
+print(flightsDelay)
+```
+
+### Overall vs. By City
+
+I'll be interested to see others' solutions to this section. I could not get *group_by()* or *summarise()* to work properly. After a bit of digging around I finally settled on using the base R *aggregate()*, which did what I needed it to do. 
+
+```{r}
+byAirline <- aggregate(flightsDelay[,3], list(flightsDelay$Airline), mean)
+print(byAirline)
+```
+
+## Analysis and Visualizations
+
+### Overall Performance
+With the data cleaned and wrangled, I used bar charts to draw out the differences. Comparing airlines overall, it's clear that America West has more on time flights on average than Alaska. 
+
+```{r}
+ggplot(byAirline, aes(x = Group.1, y = numFlights)) +
+       geom_bar(stat = "identity")
+
+```
+
+### Performance By City
+
+Viewed by city, it's interesting to see where the hubs for these airlines are, Phoenix for American West and Seattle for Alaska. 
+```{r}
+ggplot(flightsDelay, aes(x = City, y = numFlights, color = Airline)) +
+  geom_bar(fill="white", alpha=0.1,stat = "identity", position="stack")
+
+```
+
+I think the main reason for the apparent discrepancy is because these two cities with the most delays are where these airlines fly to most frequently, namely their respective hubs.
