@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Books>
+	<book id="1">
+		<Title>City of Quartz</Title>
+		<Author>Mike Davis</Author>
+		<Published>1990</Published>
+		<Publisher>Verso Books</Publisher>
+		<Subject>History</Subject>
+	</book>
+	<book id="2">
+		<Title>The Reluctant Metropolis: The Politics of Urban Growth in Los Angeles</Title>
+		<Author>William Fulton</Author>
+		<Published>1997</Published>
+		<Publisher>The Johns Hopkins University Press</Publisher>
+		<Subject>Politics</Subject>
+	</book>
+	<book id="3">
+		<Title>The Next Los Angeles: The Struggle for a Livable City</Title>
+		<Author>Robert Gottlieb, Regina Freer, Eric Garcetti, Peter Dreier</Author>
+		<Published>2006</Published>
+		<Publisher>University of California Press</Publisher>
+		<Subject>Urban Planning</Subject>
+	</book>
+	<book id="4">
+		<Title>The Death and Life of Great American Cities</Title>
+		<Author>Jane Jacobs</Author>
+		<Published>1992</Published>
+		<Publisher>Vintage Books</Publisher>
+		<Subject>Urban Planning</Subject>
+	</book>
+</Books>
