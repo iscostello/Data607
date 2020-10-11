@@ -1,0 +1,106 @@
+---
+title: "Assignment 7: Working with XML and JSON in R"
+author: "Ian Costello"
+date: "10/10/2020"
+output: html_document
+---
+
+# The Problem
+
+Select books on your favorite subject, one of the books should be by multiple authors.Use title, author, and two or three other attributes to describe the books. Create a XML, HTML, and JSON file with a table of the books and attributes. Using R, read, load, and compare the tables. 
+
+# The Solution
+
+For my book selections, I took the reading list from my course in undergrad for "Workshop in Urban Studies," which used L.A. as out lab. It was a transformative course for me and led me down my eventual career path working within the homeless response system. 
+
+## Loading Libraries
+
+Initially, I had a modest set of libraries. As the project went on, I added more and more to bug fix singular issues. With so few records to manage, there's no loss in performance. 
+
+```{r, message=FALSE}
+library(dplyr)
+library(jsonlite)
+library(rvest)
+library(XML)
+library(xml2)
+library(lemon)
+
+knit_print.data.frame <- lemon_print
+```
+
+## GitHub Files
+
+I was very adamant with myself to only access files directly from the web since we'll need to do it later on in future assignments/projects. Might as well get used to it now. After creating each table by hand (the HTML was my favorite), I loaded them onto my GitHub.
+
+```{r}
+books_jsonURL <- "https://raw.githubusercontent.com/iscostello/Data607/master/bookTable.json"
+books_HTMLURL <- "https://raw.githubusercontent.com/iscostello/Data607/master/bookTable.html"
+books_XMLURL <- "https://raw.githubusercontent.com/iscostello/Data607/master/bookTable.xml"
+```
+
+## JSON
+
+First up was the JSON, and it proved easiest to deal with in a few respects. Using **jsonlite** package, **fronJSON** was the only function I really needed. After a bit of trial and error, using **as.data.frame** from base R worked just fine. 
+
+One of the issues I encountered as I attempted to compare XML, JSON, and HTML is that JSON had a weird naming convention for column names. I had to rename them after the fact to line them up with XML and HTML.
+
+```{r}
+books_json <- fromJSON(books_jsonURL) %>% as.data.frame
+
+books_json2 <- books_json %>% rename(Title = Books.List.Title,Author = Books.List.Author,Author = Books.List.Author,Published = Books.List.Published,Publisher = Books.List.Publisher,Subject = Books.List.Subject)
+```
+
+### Printing Note
+
+Printing the tables naturally looked awful, so I hunted around for a solution to print out logical looking tables and found the **lemon** package and some instructions on how to get it working. Other solutions were the **DT** package, but I found it too bulky for just four rows of data, but good to keep in my backpocket.
+
+```{r render=lemon_print}
+head(books_json2)
+```
+
+## HTML
+
+Next with HTML, I tried to pipe these terms together, but could not get it working appropriately. I went the long way eventually, declaring each step in the process. 
+
+With both HTML and XML, I noticed late that parsing and table functions called for literal files or documents. Passing those functions URLs from GitHub did not work. After catching the pattern "Read," "Parse," "Table" I was able to manage with HTML and XML.
+
+```{r}
+books_htmlread <- read_html(books_HTMLURL)
+
+books_htmlparsed<-htmlParse(books_htmlread)
+
+books_htmltable<-readHTMLTable(books_htmlparsed, stringsAsFactors = FALSE)
+books_htmltable<-books_htmltable[[1]]
+```
+
+```{r render=lemon_print}
+head(books_htmltable)
+```
+
+## XML
+
+I was most unfamiliar with the structure of XML. When I started to get errors loading it into R, I thought it must be how I built the XML table. I copied the structure from the book, **Automated Data Collection with R** so naturally I must have done something wrong with the source. I used an online XML checker and it didn't catch any errors, which was great for my XML skills and I eliminated a source of the errors. 
+
+It's here I noticed that the parsing function was calling for a doc/file. I put the read function in front of them and it worked with not trouble. I was able to pipe these functions together, which was really exciting for me. I tried to get the HTML section to do the same, emulating the same structure as XML, but couldn't get it working. 
+
+```{r}
+books_XML <- read_xml(books_XMLURL) %>%
+  xmlParse() %>%
+  xmlToDataFrame()
+```
+
+```{r render=lemon_print}
+head(books_XML)
+```
+
+## All Things Being Equal
+
+Base R has a handy comparative function **all.equal**. I used this to compare the XML table to both the HTML and JSON tables. It returned TRUE (eventually, after I renamed the JSON columns) for both files. And, in accordance with the transitive property, since XML = HTML and HTML = JSON, then XML = JSON.
+
+```{r}
+all.equal(books_XML, books_htmltable)
+all.equal(books_htmltable, books_json2)
+```
+## Conclusions
+
+I learned a few lessons on the process of bringing in data from the web, particularly the READ, PARSE, TABLE order. Importantly, I learned to read the fine print on a function's arguments. It would have saved me a bit of time search for bugs, when all I needed to do was turn my URL into a readable format for R. I also got a bit more exposure to the power of **dplyr** and additional formatting options.
