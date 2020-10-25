@@ -1,0 +1,42 @@
+---
+title: "Assignment 8 - Working with Web APIs"
+author: "Ian Costello"
+date: "10/24/2020"
+output: html_document
+---
+
+# *New York Times* APIs in R
+
+## Loading Packages
+
+I only needed a handful of packages for this assignment. I initially loaded **httr**, but wound up not needing it. From the last assignment I picked up **jsonlite** to read and parse and **lemon** for printing initial results.
+
+```{r}
+library(jsonlite)
+library(tidyverse)
+library(lemon)
+
+knit_print.data.frame <- lemon_print
+```
+
+## Reading R
+
+It took a minute to understand how the API call should be structured. *NYT* has good documentation, I discovered, on how API calls are to be formatted. I was really uncomfortable with the notion I would need to publish an API call with the key the *Times* gave me. So after I got this API working and into a dataframe, I hunted for a solution to hide my key while still using it in the code.
+
+I found a solution to add a line in the R environment naming a variable with my API key. Then I can reference that key, have it all function, but not show it to the entire Internet. Pasting the "root" URL and my key variable together into a the "url" variable did the trick. 
+
+## Parsing JSON to Data Frame
+
+From assignment 7, I was pleased we'd be working with JSON since I found this the easiest to work with. After using the function **fromJSON** and piping **data.frame** afterwards made a data frame that can be edited and used for analysis.
+```{r render=lemon_print}
+url <- paste0("https://api.nytimes.com/svc/mostpopular/v2/viewed/1.json?api-key=",Sys.getenv("NYT_KEY"))
+x <- fromJSON(url, flatten = TRUE) %>% data.frame()
+
+head(x,200)
+```
+
+## Conclusions
+
+My chosen API does not have a ton of results, so doing a lot of analysis with it is a bit needless. I went for the most viewed articles in the last 7 days. To no surprise they are mostly politics or COVID related, except for a few articles including one about an extremely tough beetle...
+
+I learned how to hide my API keys, a skill that will likely transfer to other situations. And discovered that once the API structure is understood, pulling others in becomes a pretty straightforward matter. 
