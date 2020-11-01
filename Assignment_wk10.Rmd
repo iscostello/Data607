@@ -1,0 +1,117 @@
+---
+title: "Week 10 Assignment – Sentiment Analysis"
+author: "Ian Costello"
+date: "10/31/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Harry Pott-R
+
+My task is to connect words from a "corpus" or body of language to emotions through a "sentiment analysis." Given some base code from the book **Text Mining with R** I am take the analysis a bit further and use a novel corpus. I found a package [**harrypotter**](https://github.com/bradleyboehmke/harrypotter) with all the *Harry Potter* books each in one long string. I decided to use just the text from the first book *Harry Potter and the Philosophers Stone*. They used the British title to the book, as American children may not be readily familiar with what a philosopher is I suppose? I am a fan of the books, and was in the target demo for them at the time of their publication, and it being around Halloween, I figured it very fitting set to use.
+
+```{r}
+library(tidytext)
+library(harrypotter)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(ggplot2)
+library(wordcloud)
+library(dplyr)
+
+data(stop_words)
+```
+## Reading in the Text
+
+I had a lot of trouble in this section attempting to reverse engineer code (Silge & Robinson, 2017, p.17). Nevertheless, after a bit of trial and error I was able to use the **tibble()** function to create a proper data frame. Along the way, I noticed that the chapter names were the first few words in each line of the dataframe. I played around with **str_extract_all()** and other regex, but couldn't get it to work such that the chapter names went into a new column. The chapter names were in all-caps, which I thought would make it easier, but I decided to just create a new column by copying each chapter title into a vector.  
+
+```{r}
+hpps_text <- philosophers_stone
+hpps_df <- tibble(chapter_num = 1:17, text=hpps_text) %>%
+  mutate(chapter = c("THE BOY WHO LIVED","THE VANISHING GLASS","THE LETTERS FROM NO ONE","THE KEEPER OF THE KEYS","DIAGON ALLEY","THE JOURNEY FROM PLATFORM NINE AND THREE-QUARTERS","THE SORTING HAT","THE POTIONS MASTER","THE MIDNIGHT DUEL","HALLOWEEN","QUIDDITCH","THE MIRROR OF ERISED","	NICOLAS FLAMEL","NORBERT THE NORWEGIAN RIDGEBACK","THE FORIBIDDEN FOREST","THROUGH THE TRAPDOOR","	THE MAN WITH TWO FACES"))
+```
+
+### Bit of Clean-Up
+
+From project 3 and from the videos in this week's material, I saw 'stop words' being really helpful. I decided that the dataframe I was going to use for all the subsequent work would exclude these words. Neat trick from the video is **dplyr's** **anti-join()**.
+
+```{r}
+hpps_df <- hpps_df %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words)
+```
+
+## Harry Potter is Quite Grim
+
+### Counts of Words
+Before getting into the sentiment analysis, I wanted to baseline what the most used words were. I was not surprised to see that character names were used the most.
+
+```{r}
+hpps_cnt <- hpps_df %>%
+  count(word, sort = TRUE) %>%
+  slice(1:10) %>%
+    ggplot(., aes(x=reorder(word, -n), y=n))+
+              geom_bar(stat='identity')
+
+hpps_cnt
+```
+
+```{r}
+hpps_df %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+
+### Sentiment Joins
+
+I started using the **bing** lexicon following chapter 2's path (Silge & Robinson, 2017, p.18). I didn't have the same level of detail as the Austen data set, but I was able to join the lexicon and use it for some quick analysis. 
+
+```{r}
+hpps_sent <- hpps_df %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(chapter, index = chapter_num %/% 80, sentiment) %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment = positive - negative)
+```
+### A Very Britsh Book
+
+Reading the book, I don't recall it being so negative. Looking at the flow of the book (I had to reorder the facets to get it to flow), none of the chapters break the emotionally positive ceiling of zero! 
+
+**Spoiler Alert**
+
+As Harry arrives at school his life as a mistreated orphan does get markedly better, but then as he faces a number of things that would prefer to kill him later in the book and then his return to his frankly abusive family we go back down the emotional scale. I recall reading this as a message or hope and determination, but the words must be rather grim according to the lexicon.
+
+```{r}
+hpps_sent$facet <- factor(hpps_sent$chapter, levels = c("THE BOY WHO LIVED","THE VANISHING GLASS","THE LETTERS FROM NO ONE","THE KEEPER OF THE KEYS","DIAGON ALLEY","THE JOURNEY FROM PLATFORM NINE AND THREE-QUARTERS","THE SORTING HAT","THE POTIONS MASTER","THE MIDNIGHT DUEL","HALLOWEEN","QUIDDITCH","THE MIRROR OF ERISED","	NICOLAS FLAMEL","NORBERT THE NORWEGIAN RIDGEBACK","THE FORIBIDDEN FOREST","THROUGH THE TRAPDOOR","	THE MAN WITH TWO FACES"))
+
+ggplot(hpps_sent, aes(index, sentiment, fill = chapter)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~facet, ncol = 5)
+```
+
+### Once more, with Feeling
+
+Using the **nrc** lexicon, I was able to parse out the emotions, nit just as a bianary choice, but across a spectrum of emotions. Negatives still outweighed the positives, and I'm still quite shocked by the revelation as a big fan of the books...
+
+
+```{r}
+hpps_sentnrc <- hpps_df %>%
+  inner_join(get_sentiments("nrc")) %>%
+  count(sentiment)
+
+ggplot(hpps_sentnrc, aes(x=reorder(sentiment, -n), y=n))+
+              geom_bar(stat='identity')
+
+```
+
+## Conclusions
+
+I enjoyed working with the dataset and problem solving getting it to work. I still make some really simple mistakes, like when R starts the session and piping no longer works... It took about five minutes to trace that issue back. Each time I encounter something like this, I mentally make note of it for my quick fix troubleshooting list. The R equivalent of turning one's computer off and on again. I felt as though the **nrc** lexicon was more useful to better understand the level of detail of the emotion rather than just the positive or negative characterization, though that was quite handy for quick analysis.
+
+## Work Cited
+
+Silge, Julia; Robinson, David. *Text Mining with R.* Sebastopol, CA: O'Reilly Media, Inc., 2017. Print.
