@@ -1,0 +1,161 @@
+---
+title: "Project 4 - Text Classification"
+author: "Ian Costello"
+date: "11/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+Unwanted emails, often called "spam" are becoming increasingly frequent, problematic, and potential dangerous carrying fraudulent offers and deal, or even viruses. Most email accounts have automatic filtering methods to separate out "ham" or the wanted emails, with spam. This project is meant to simulate that filter on a micro-scale. 
+
+I have to say this project, appropriately, is the hardest thing I've encountered so far. 
+
+# Loading Packages
+
+I saw the number of packages expand and shrink as I tried something and ran into a block and had to work around or through it. Packages I would put as honorable mentions *quanteda* and *RTextTools*. I really wanted to work with the modeling features in RTextTools, but could not get them working with the way I constructed the corpus. 
+
+```{r}
+library(tm)
+library(tidyverse)
+library(dplyr)
+library(stringr)
+library(tidytext)
+library(caret)
+library(randomForest)
+```
+
+# Directories 
+
+Downloading and unzipping the files, I placed both in a folder on my machine and put the pathways in variables to make them easier to work with. 
+
+```{r}
+hamDir <- "D:\\CUNY\\DATA 607 - Data Aq\\SpamHam\\easy_ham"
+spamDir <- "D:\\CUNY\\DATA 607 - Data Aq\\SpamHam\\spam"
+```
+
+# Corpora to Data Frames
+
+Based on some examples of text classification I found in the texts and online, I think I might have this a bit backwards. It all seems to work, so I didn't mess with it to much. My plan here was to get the corpora into a data frame as quickly as possible. 
+
+```{r}
+ham_cor <- VCorpus(DirSource(hamDir), readerControl = list(language="en"))
+spam_cor <- VCorpus(DirSource(spamDir), readerControl = list(language="en"))
+```
+
+## Data Frames
+
+From the tidyverse, *tidy()* automatically put the corpora into neat-ish columns. I would like to use this function more, and perhaps find a way for it to read out the other default columns like header and author. I did add in a column for 'isHam', indicating if the message is classed as ham (1) or spam (0). I caught this from the intro video on how to download these files. I saw a method to attach this as meta data using the *meta()* function, but I couldn't get it working.  
+
+```{r}
+ham_df <- ham_cor %>%
+  tidy() %>%
+  mutate(isHam = 1) 
+```
+
+```{r}
+spam_df <- spam_cor %>%
+  tidy() %>%
+  mutate(isHam = 0)
+```
+
+## Joining the data sets
+
+Using *full_join()*, I combined both the spam and ham sets and selected the columns I needed. 
+
+```{r}
+hamSpam <- full_join(ham_df,spam_df)
+hamSpam <- hamSpam %>%
+  select(id, text, isHam)
+colnames(hamSpam)
+```
+
+## Proportions
+
+Based on the proportions of these data, spam accounts for around 17% of the data. When tested, I'd have liked to account for this imbalance to ensure that the samples are themselves representative.
+
+```{r}
+table(hamSpam$isHam)
+prop.table(table(hamSpam$isHam))
+```
+
+# Document Term Matrix
+
+I feel like I took a step backwards here going from corpus to df to corpus to dtm. I couldn't get the dtm straight from the original corpus or the joined data frames. With a lot of experimentation, I got this working. Adding in the steps to clean the data as much as possible with the help of the *tm* package. 
+
+```{r}
+hamSpam_corp <- Corpus(VectorSource(hamSpam$text)) %>%
+  tm_map(removeWords, stopwords("english")) %>%
+  tm_map(removeNumbers) %>%
+  tm_map(removePunctuation) %>%
+  tm_map(stripWhitespace) %>%
+  tm_map(PlainTextDocument) %>%
+  tm_map(content_transformer(tolower))
+
+hamSpam_dtm <- DocumentTermMatrix(hamSpam_corp)
+hamSpam_dtm <- hamSpam_dtm %>%
+  removeSparseTerms(sparse = .99)
+
+inspect(hamSpam_dtm)
+```
+
+# DTM to Matrix
+
+From the DTM, I turned created a matrix and then another data frame, adding in the "isHam" column for later use as my data class labels. 
+
+```{r}
+hamSpam_matrix <- hamSpam_dtm %>%
+  as.matrix() %>%
+  as.data.frame() %>%
+  mutate(isHam = hamSpam$isHam) %>%
+  select(isHam, everything())
+```
+
+# Test/Train and Model
+
+Setting a seed for reproducibility, I used the handy *createDataPartition()* function to index my data into the test and training sets. I got stuck here for a bit, because I failed to put the ", " in the train and test variables...
+
+These pieces of code are all in one chunk to take advantage of the *set.seed()*. Originally, I had them separated, but I got inconsistent results running it a few times, so I put all these components together. I was able to get to the train and test data sets with relatively minor hiccups. When it came to modeling, training, and testing my data I ran into a bunch of walls. I ping-ponged between modeling packages and kept coming up with errors about using a data frame versus a corpus, or not having my data labels just right. I eventually, came across a solution using just the *randomForest* package. I was able to feed the model my training data and have it tested rather simply by comparison to the others I looks at. 
+
+```{r}
+set.seed(12345)
+hamSpamIndex <- createDataPartition(hamSpam_matrix$isHam, times = 1, p = 0.7, list = FALSE)
+
+train <- hamSpam_matrix[hamSpamIndex, ]
+test <- hamSpam_matrix[-hamSpamIndex, ]
+
+prop.table(table(train$isHam))
+prop.table(table(test$isHam))
+
+classifier <- randomForest(x = train,
+                          y = train$isHam,
+                          ntree = 7)
+
+pred <- predict(classifier, newdata = test)
+
+conf_matrix <- table(pred>0,test$isHam)
+
+
+conf_matrix
+```
+# Results
+
+From the confusion matrix, the model worked out okay. To validate and check the judgment of the model, I added up the correct observations and divided by all observations. The model performed rather well, selecting correctly ham or spam 99.8% of the time.  
+
+
+```{r}
+val <- conf_matrix['TRUE', 2] + conf_matrix['FALSE', 1] 
+accuracy <- val/nrow(test)
+
+val
+accuracy
+```
+
+
+
+
+
+
